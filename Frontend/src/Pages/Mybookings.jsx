@@ -65,6 +65,9 @@ const Mybookings = () => {
         );
     }
 
+    const handlePayment = async (bookingId) => {
+      console.log(`Initiating payment for booking ID: ${bookingId}`);
+    }
 
     return (
       <div className="py-28 md:pb-35 md:pt-32 px-4 md:px-16 lg:px-24 xl:px-32">
@@ -177,7 +180,8 @@ const Mybookings = () => {
                   {/* pay-now-button */}
 
                     {booking.paymentStatus !== "PAID" && (
-                        <button className="cursor-pointer mt-3 px-4 py-2 bg-blue-500 text-white rounded-md text-sm hover:opacity-90">
+                        <button onclick={() => handlePayment(booking.id)}
+                         className="cursor-pointer mt-3 px-4 py-2 bg-blue-500 text-white rounded-md text-sm hover:opacity-90">
                             Pay Now
                         </button>
                     )}
