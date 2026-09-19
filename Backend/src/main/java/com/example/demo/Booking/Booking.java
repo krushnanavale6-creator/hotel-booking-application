@@ -32,7 +32,7 @@ public class Booking {
 	
 	private String status = "PENDING";
 	private String paymentStatus = "UNPAID";
-	
+	private String paymentSessionId;
 	//getters and setters
 	
 
@@ -87,6 +87,12 @@ public class Booking {
 
     public void setPaymentStatus(String paymentStatus) {
         this.paymentStatus = paymentStatus;
+    }
+    public String getPaymentSessionId() {
+    	return paymentSessionId;
+    }
+    public void setPaymentSessionId(String paymentSessionId) {
+    	this.paymentSessionId = paymentSessionId;
     }
 	
 }
