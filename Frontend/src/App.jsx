@@ -12,6 +12,8 @@ import Dashboard from './Pages/hotelOwner/Dashboard';
 import AddRoom from './Pages/hotelOwner/AddRoom';
 import ListRoom from './Pages/hotelOwner/ListRoom';
 import EditRoom from './Pages/hotelOwner/EditRoom';
+import PaymentSuccess from './Pages/PaymentSuccess';
+import PaymentCancelled from './Pages/PaymentCancelled';
 
 
 const App = () => {
@@ -51,7 +53,8 @@ const App = () => {
               <Route path='edit-room/:id' element={<EditRoom/>}/>
               <Route path='list-room' element={<ListRoom/>} />
           </Route>
-          
+          <Route path='/payment-success' element={<PaymentSuccess/>} />
+          <Route path='/payment-cancelled' element={<PaymentCancelled/>} />
         </Routes>
       </div>
       {!isOwnerPath && <Footer />}

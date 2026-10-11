@@ -11,7 +11,8 @@ const Mybookings = () => {
 
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
-
+    const [payingBookingId, setPayingBookingId] = useState(null);
+    const [paymentError, setPaymentError] = useState("");
     useEffect(() => {
 
         const fetchBookings = async () => {
@@ -65,9 +66,143 @@ const Mybookings = () => {
         );
     }
 
-    const handlePayment = async (bookingId) => {
-      console.log(`Initiating payment for booking ID: ${bookingId}`);
+    
+    
+const handlePayment = async (bookingId) => {
+  console.log("Paying booking ID:", bookingId);
+  try {
+    setPayingBookingId(bookingId);
+    setPaymentError("");
+
+    // Load Razorpay Checkout if it isn't already loaded.
+    if (!window.Razorpay) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = resolve;
+        script.onerror = () =>
+          reject(new Error("Unable to load Razorpay Checkout"));
+        document.body.appendChild(script);
+      });
     }
+
+    // Create the order on the backend.
+    const response = await fetch(
+      "http://localhost:8080/api/payments/create-order",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bookingId }),
+        
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to create payment order");
+    }
+
+    const options = {
+      key: data.keyId,
+      amount: data.amount,
+      currency: data.currency,
+      name: "QuickStay",
+      description: `Hotel booking #${bookingId}`,
+      order_id: data.orderId,
+
+      handler: async function (paymentResponse) {
+        try {
+          setPaymentError("");
+
+          // Verify payment with the backend.
+          const verifyResponse = await fetch(
+            "http://localhost:8080/api/payments/verify",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                bookingId,
+                razorpay_order_id: paymentResponse.razorpay_order_id,
+                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                razorpay_signature: paymentResponse.razorpay_signature,
+              }),
+            }
+          );
+
+          const verifyData = await verifyResponse.json();
+
+          if (!verifyResponse.ok) {
+            throw new Error(
+              verifyData.error || "Payment verification failed"
+            );
+          }
+
+          // Reload bookings from the backend.
+          const email = user?.primaryEmailAddress?.emailAddress;
+
+          if (email) {
+            const bookingsResponse = await fetch(
+              `http://localhost:8080/api/bookings/user/${email}`
+            );
+
+            if (!bookingsResponse.ok) {
+              throw new Error(
+                "Payment verified, but bookings could not be refreshed"
+              );
+            }
+
+            const updatedBookings = await bookingsResponse.json();
+            setBookings(updatedBookings);
+          }
+
+          setPaymentError("");
+        } catch (error) {
+          console.error("Payment verification failed:", error);
+          setPaymentError(
+            error.message || "Payment verification failed"
+          );
+        } finally {
+          setPayingBookingId(null);
+        }
+      },
+
+      modal: {
+        ondismiss: function () {
+          setPayingBookingId(null);
+        },
+      },
+
+      theme: {
+        color: "#3B82F6",
+      },
+    };
+
+    const razorpay = new window.Razorpay(options);
+
+    razorpay.on("payment.failed", function (response) {
+      console.error("Razorpay payment failed:", response.error);
+      setPaymentError(
+        response.error?.description || "Payment failed. Please try again."
+      );
+      setPayingBookingId(null);
+    });
+
+    razorpay.open();
+  } catch (error) {
+    console.error("Payment initiation failed:", error);
+    setPaymentError(
+      error.message || "Payment could not be started. Please try again."
+    );
+    setPayingBookingId(null);
+  }
+};
+
+
 
     return (
       <div className="py-28 md:pb-35 md:pt-32 px-4 md:px-16 lg:px-24 xl:px-32">
@@ -180,11 +315,19 @@ const Mybookings = () => {
                   {/* pay-now-button */}
 
                     {booking.paymentStatus !== "PAID" && (
-                        <button onclick={() => handlePayment(booking.id)}
+                        <button 
+                        onClick={() => handlePayment(booking.id)}
+                        disabled={payingBookingId === booking.id}
                          className="cursor-pointer mt-3 px-4 py-2 bg-blue-500 text-white rounded-md text-sm hover:opacity-90">
-                            Pay Now
+                            {payingBookingId === booking.id ? "Opening Payment..." : "Pay Now"}
                         </button>
                     )}
+
+                     {paymentError && (
+                            <p className="mt-2 text-sm text-red-600">
+                            {paymentError}
+                            </p>
+                        )}
 
                 </div>
               </div>
