@@ -51,7 +51,6 @@ public class BookingService {
 	            return false;
 	        }
 	    }
-
 	    return true;
 	}
 }

@@ -33,7 +33,17 @@ public class Booking {
 	private String status = "PENDING";
 	private String paymentStatus = "UNPAID";
 	private String paymentSessionId;
+	
+	@Column(name = "razorpay_order_id")
+	private String razorpayOrderId;
 	//getters and setters
+	public String getRazorpayOrderId() {
+	    return razorpayOrderId;
+	}
+
+	public void setRazorpayOrderId(String razorpayOrderId) {
+	    this.razorpayOrderId = razorpayOrderId;
+	}
 	
 
     public Long getId(){ 
