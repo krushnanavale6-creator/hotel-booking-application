@@ -19,7 +19,6 @@ public class Hotel {
     private String contact;
 
     private String city;
-    
     private String ownerEmail;
 
     public String getOwnerEmail() {
