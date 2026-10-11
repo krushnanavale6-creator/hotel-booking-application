@@ -29,6 +29,7 @@ public class Room {
     private Hotel hotel;
 
     public Room() {
+   
     }
 
     public Long getId() {
@@ -70,7 +71,7 @@ public class Room {
     public void setAmenities(List<String> amenities) {
         this.amenities = amenities;
     }
-
+  
     public List<String> getImages() {
         return images;
     }
