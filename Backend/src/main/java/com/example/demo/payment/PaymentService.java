@@ -113,6 +113,10 @@ public class PaymentService {
         if (!razorpayOrderId.equals(booking.getRazorpayOrderId())) {
             throw new IllegalArgumentException("Order does not belong to this booking");
         }
+        
+        if("PAID".equals(booking.getPaymentStatus())) {
+        	throw new IllegalStateException("Booking is already paid");
+        }
 
         String payload = razorpayOrderId + "|" + razorpayPaymentId;
 
@@ -145,6 +149,15 @@ public class PaymentService {
         if (!razorpayOrderId.equals(payment.get("order_id"))) {
             throw new IllegalArgumentException("Payment order mismatch");
         }
+        
+        //Amount + currency : the payment must match the order the server creted
+        Order order = client.orders.fetch(razorpayOrderId);
+        Number orderAmount = order.get("amount");
+        Number paidAmount = payment.get("amount");
+        if (orderAmount.longValue() != paidAmount.longValue()
+                || !"INR".equals(payment.get("currency"))) {
+            throw new IllegalStateException("Payment amount or currency mismatch");
+        }
 
         String paymentStatus = payment.get("status");
 
@@ -154,6 +167,7 @@ public class PaymentService {
         }
 
         booking.setPaymentStatus("PAID");
+        booking.setStatus("CONFIRMED");
         bookingRepository.save(booking);
 
         return true;
